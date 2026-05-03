@@ -13,7 +13,6 @@ dist/
 apps/frontend/dist/
 apps/backend/dist/
 *.tsbuildinfo
-e2e/
 *.log
 playwright-report/
 test-results/
