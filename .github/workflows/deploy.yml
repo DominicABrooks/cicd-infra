@@ -17,11 +17,9 @@ jobs:
       - run: cd infra/terraform && terraform init
       - run: cd infra/terraform && terraform apply -auto-approve
 
-  deploy:
+  build:
     runs-on: ubuntu-latest
     needs: terraform
-    permissions:
-      contents: write
 
     steps:
       - uses: actions/checkout@v5
@@ -32,21 +30,78 @@ jobs:
           node-version: '18'
 
       - run: npm ci
+
+      # Static checks
       - run: npm run lint:frontend
       - run: npm run typecheck:frontend
       - run: npm run lint:backend
       - run: npm run typecheck:backend
+
+      # Unit tests
       - run: npm run test:frontend
       - run: npm run test:backend
+
+      # Build artifacts
       - run: npm run build:frontend
       - run: npm run build:backend
-      - run: npx playwright install
-      - run: npm run test:frontend:e2e
+
+      # Upload frontend build for next job
+      - uses: actions/upload-artifact@v5
+        with:
+          name: frontend-dist
+          path: apps/frontend/dist
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: build
+
+    container:
+      image: mcr.microsoft.com/playwright:v1.45.0-jammy
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '18'
+
+      - run: npm ci
+
+      # Download built frontend
+      - uses: actions/download-artifact@v5
+        with:
+          name: frontend-dist
+          path: apps/frontend/dist
+
+      # Serve built app
+      - name: Start frontend server
+        run: |
+          npx serve apps/frontend/dist -l 5173 &
+          npx wait-on http://localhost:5173
+
+      # Run Playwright tests (no install needed in this container)
+      - run: npx playwright test --config=apps/frontend/playwright.config.ts
+
       - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: playwright-report
           path: apps/frontend/playwright-report/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: e2e
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: frontend-dist
+          path: apps/frontend/dist
 
       - name: Deploy to Pages
         uses: peaceiris/actions-gh-pages@v3
