@@ -4,6 +4,11 @@
 *.tfstate.*
 .terraform.lock.hcl
 
+# Node.js
+node_modules/
+dist/
+*.log
+
 # Git
 .DS_Store
 Thumbs.db
@@ -11,9 +16,6 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
-
-# Logs
-*.log
 
 # OS
 *.swp

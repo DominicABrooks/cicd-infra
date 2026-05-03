@@ -1,25 +1,29 @@
 # CI/CD Infrastructure Demo
 
-A minimal, free CI/CD setup using GitHub + Terraform + GitHub Pages to deploy a static website.
+A minimal, free CI/CD setup using GitHub + Terraform + GitHub Pages to deploy a React app.
 
 ## Overview
 
 This repository demonstrates a complete CI/CD pipeline that:
 - Uses Terraform to simulate infrastructure deployment
-- Runs automated tests via GitHub Actions
-- Deploys a static site to GitHub Pages
+- Runs automated tests with Vitest
+- Builds a React application
+- Deploys to GitHub Pages
 
 ## Architecture
 
 - **Repository**: Hosted on GitHub
 - **CI/CD**: GitHub Actions (`.github/workflows/deploy.yml`)
 - **Infrastructure**: Terraform (minimal null provider)
+- **Frontend**: React + Vite
+- **Testing**: Vitest
 - **Hosting**: GitHub Pages
 
 ## Local Development
 
 ### Prerequisites
 
+- [Node.js](https://nodejs.org/) (v18+)
 - [Terraform](https://www.terraform.io/downloads) (optional - for local testing)
 - Git
 
@@ -31,13 +35,29 @@ This repository demonstrates a complete CI/CD pipeline that:
    cd cicd-infra
    ```
 
-2. Initialize Terraform (optional):
+2. Install dependencies:
    ```bash
-   terraform init
+   npm install
    ```
 
-3. Apply Terraform configuration (optional):
+3. Run tests:
    ```bash
+   npm test
+   ```
+
+4. Start development server:
+   ```bash
+   npm run dev
+   ```
+
+5. Build for production:
+   ```bash
+   npm run build
+   ```
+
+6. Initialize Terraform (optional):
+   ```bash
+   terraform init
    terraform apply
    ```
 
@@ -46,7 +66,7 @@ This repository demonstrates a complete CI/CD pipeline that:
 The pipeline runs automatically on every push to the `main` branch:
 
 1. **Terraform Job**: Initializes and applies Terraform configuration
-2. **Deploy Job**: Publishes the static site to GitHub Pages
+2. **Deploy Job**: Installs dependencies, runs tests, builds the React app, and deploys to GitHub Pages
 
 ### Enabling GitHub Pages
 
@@ -55,16 +75,23 @@ The pipeline runs automatically on every push to the `main` branch:
 3. Choose **gh-pages** branch
 4. Click **Save**
 
-Your site will be available at: `https://dominicabrooks.github.io/cicd-infra/`
+Your React app will be available at: `https://dominicabrooks.github.io/cicd-infra/`
 
 ## Project Structure
 
 ```
 .
-├── index.html              # Static website
+├── index.html              # Vite entry point
+├── package.json            # Node.js dependencies and scripts
+├── vite.config.js          # Vite configuration
 ├── main.tf                 # Terraform configuration
 ├── .gitignore             # Git ignore rules
 ├── README.md              # This file
+├── src/
+│   ├── main.jsx           # React app entry
+│   ├── App.jsx            # Main component
+│   ├── App.css            # Styles
+│   └── App.test.jsx       # Vitest tests
 └── .github/
     └── workflows/
         └── deploy.yml      # GitHub Actions workflow
@@ -72,7 +99,8 @@ Your site will be available at: `https://dominicabrooks.github.io/cicd-infra/`
 
 ## Files Description
 
-- `index.html`: Simple static page deployed to GitHub Pages
+- `src/App.jsx`: React component rendering the main heading
+- `src/App.test.jsx`: Vitest test ensuring the heading renders correctly
 - `main.tf`: Terraform config using null provider to simulate deployment
 - `deploy.yml`: GitHub Actions workflow for CI/CD automation
 
