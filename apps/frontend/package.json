@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "test:e2e": "playwright test --config=playwright.config.ts",
+    "test:e2e": "npx playwright test --config=playwright.config.ts",
     "lint": "echo 'frontend lint placeholder'",
     "typecheck": "tsc --noEmit"
   },
