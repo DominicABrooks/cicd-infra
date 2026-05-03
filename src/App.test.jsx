@@ -6,6 +6,6 @@ describe('App', () => {
   it('renders the heading', () => {
     render(<App />)
     const heading = screen.getByRole('heading', { level: 1 })
-    expect(heading).toHaveTextContent('Hello from Terraform Deploy')
+    expect(heading.textContent).toBe('Hello from Terraform Deploy')
   })
 })

@@ -102,7 +102,7 @@ Your React app will be available at: `https://dominicabrooks.github.io/cicd-infr
 │   ├── App.jsx            # Main component
 │   ├── App.css            # Styles
 │   └── App.test.jsx       # Vitest unit tests
-├── tests/
+├── e2e/
 │   └── app.spec.js        # Playwright e2e tests
 └── .github/
     └── workflows/
@@ -113,7 +113,7 @@ Your React app will be available at: `https://dominicabrooks.github.io/cicd-infr
 
 - `src/App.jsx`: React component rendering the main heading
 - `src/App.test.jsx`: Vitest unit test for the component
-- `tests/app.spec.js`: Playwright e2e test for the deployed app
+- `e2e/app.spec.js`: Playwright e2e test for the deployed app
 - `infra/main.tf`: Terraform config using null provider to simulate deployment
 - `deploy.yml`: GitHub Actions workflow for CI/CD automation
 
