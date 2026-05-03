@@ -14,8 +14,8 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
 
-      - run: cd infra && terraform init
-      - run: cd infra && terraform apply -auto-approve
+      - run: cd infra/terraform && terraform init
+      - run: cd infra/terraform && terraform apply -auto-approve
 
   deploy:
     runs-on: ubuntu-latest
