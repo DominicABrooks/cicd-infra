@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "echo 'backend build placeholder'",
+    "build": "tsc -p tsconfig.json",
     "test": "echo 'backend tests placeholder'",
     "lint": "echo 'backend lint placeholder'",
-    "typecheck": "echo 'backend typecheck placeholder'"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {}
 }

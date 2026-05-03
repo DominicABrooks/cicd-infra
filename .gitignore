@@ -10,6 +10,9 @@ apps/*/node_modules/
 packages/*/node_modules/
 .dist/
 dist/
+apps/frontend/dist/
+apps/backend/dist/
+*.tsbuildinfo
 e2e/
 *.log
 playwright-report/

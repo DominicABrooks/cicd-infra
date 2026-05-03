@@ -8,9 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "test:e2e": "playwright test --config=playwright.config.mjs",
+    "test:e2e": "playwright test --config=playwright.config.ts",
     "lint": "echo 'frontend lint placeholder'",
-    "typecheck": "echo 'frontend typecheck placeholder'"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "react": "^18.2.0",

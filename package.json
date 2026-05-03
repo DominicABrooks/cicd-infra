@@ -15,10 +15,12 @@
     "build:backend": "npm --workspace backend run build",
     "test:backend": "npm --workspace backend run test",
     "lint:backend": "npm --workspace backend run lint",
-    "typecheck:backend": "npm --workspace backend run typecheck",
-    "install": "npm install"
+    "typecheck:backend": "npm --workspace backend run typecheck"
   },
   "devDependencies": {
-    "turbo": "^1.12.0"
+    "turbo": "^1.12.0",
+    "typescript": "^5.6.0",
+    "ts-node": "^10.9.1",
+    "@types/node": "^20.14.0"
   }
 }
