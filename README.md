@@ -1,126 +1,108 @@
-# CI/CD Infrastructure Demo
+# Monorepo CI/CD Baseline
 
-A minimal, free CI/CD setup using GitHub + Terraform + GitHub Pages to deploy a React app.
+This repository has been converted to a monorepo baseline with:
+- `apps/frontend` — React/Vite frontend
+- `apps/backend` — placeholder backend service
+- `packages/shared` — shared package
+- `infra/terraform` — Terraform infra definitions
+- `deploy/helm` — Helm chart artifacts
+- `.github/workflows` — CI/CD pipeline
 
 ## Overview
 
-This repository demonstrates a complete CI/CD pipeline that:
-- Uses Terraform to simulate infrastructure deployment
-- Runs unit tests with Vitest
-- Runs end-to-end tests with Playwright
-- Builds and deploys a React application to GitHub Pages
+This baseline is built for a monorepo pipeline where:
+- affected detection is possible
+- frontend and backend workloads are separated
+- infrastructure and deployment artifacts live in dedicated folders
+- Docker images are built once and reused across environments
 
 ## Architecture
 
-- **Repository**: Hosted on GitHub
-- **CI/CD**: GitHub Actions (`.github/workflows/deploy.yml`)
-- **Infrastructure**: Terraform (minimal null provider)
+- **Monorepo**: npm workspaces
 - **Frontend**: React + Vite
-- **Unit Testing**: Vitest + React Testing Library
-- **E2E Testing**: Playwright
-- **Hosting**: GitHub Pages
+- **Backend**: Node placeholder service
+- **Shared**: package boundary for shared code
+- **Infrastructure**: Terraform in `infra/terraform`
+- **Deployment**: Helm chart in `deploy/helm`
 
 ## Local Development
 
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (v18+)
-- [Terraform](https://www.terraform.io/downloads) (optional - for local testing)
+- [Terraform](https://www.terraform.io/downloads) (optional)
 - Git
 
 ### Setup
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/DominicABrooks/cicd-infra.git
-   cd cicd-infra
-   ```
+```bash
+git clone https://github.com/DominicABrooks/cicd-infra.git
+cd cicd-infra
+npm install
+```
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+### Frontend
 
-3. Run unit tests:
-   ```bash
-   npm test
-   ```
+```bash
+npm run dev:frontend
+```
 
-4. Run e2e tests:
-   ```bash
-   npm run build
-   npm run test:e2e
-   ```
+### Backend
 
-5. Build for production:
-   ```bash
-   npm run build
-   ```
+```bash
+npm run test:backend
+npm run build:backend
+```
 
-6. Initialize Terraform (optional):
-   ```bash
-   cd infra
-   terraform init
-   terraform apply
-   ```
+### Testing
+
+```bash
+npm run test:frontend
+npm run test:frontend:e2e
+```
+
+### Terraform
+
+```bash
+cd infra/terraform
+terraform init
+terraform apply
+```
 
 ## CI/CD Pipeline
 
-The pipeline runs automatically on every push to the `main` branch:
+The workflow now follows a monorepo-style flow:
 
-1. **Terraform Job**: Initializes and applies Terraform configuration in `infra/`
-2. **Deploy Job**: 
-   - Installs dependencies
-   - Runs unit tests
-   - Builds the React app
-   - Runs e2e tests against the built app
-   - Deploys to GitHub Pages (only if all tests pass)
-
-### Enabling GitHub Pages
-
-1. Go to repository **Settings** > **Pages**
-2. Select **"Deploy from a branch"**
-3. Choose **gh-pages** branch
-4. Click **Save**
-
-Your React app will be available at: `https://dominicabrooks.github.io/cicd-infra/`
+1. Checkout
+2. Install dependencies
+3. Frontend and backend lint/typecheck
+4. Frontend and backend unit tests
+5. Frontend and backend build
+6. Playwright e2e tests
+7. Deploy frontend bundle to GitHub Pages
 
 ## Project Structure
 
 ```
 .
-├── index.html              # Vite entry point
-├── package.json            # Node.js dependencies and scripts
-├── vite.config.js          # Vite configuration
-├── playwright.config.js    # Playwright configuration
-├── .gitignore             # Git ignore rules
-├── README.md              # This file
+├── apps/
+│   ├── frontend/          # React/Vite frontend app
+│   └── backend/           # backend service placeholder
+├── packages/
+│   └── shared/            # shared package
 ├── infra/
-│   └── main.tf            # Terraform configuration
-├── src/
-│   ├── main.jsx           # React app entry
-│   ├── App.jsx            # Main component
-│   ├── App.css            # Styles
-│   └── App.test.jsx       # Vitest unit tests
-├── e2e/
-│   └── app.spec.js        # Playwright e2e tests
-└── .github/
-    └── workflows/
-        └── deploy.yml      # GitHub Actions workflow
+│   └── terraform/         # Terraform config
+├── deploy/
+│   └── helm/              # Helm chart placeholder
+├── .github/
+│   └── workflows/         # CI/CD config
+├── package.json           # monorepo workspace root
+├── turbo.json             # monorepo pipeline baseline
+└── .gitignore
 ```
 
-## Files Description
+## Notes
 
-- `src/App.jsx`: React component rendering the main heading
-- `src/App.test.jsx`: Vitest unit test for the component
-- `e2e/app.spec.js`: Playwright e2e test for the deployed app
-- `infra/main.tf`: Terraform config using null provider to simulate deployment
-- `deploy.yml`: GitHub Actions workflow for CI/CD automation
-
-## Cost
-
-This setup is completely free:
-- GitHub repository: Free
-- GitHub Actions: Free tier included
-- GitHub Pages: Free hosting
-- Terraform: No cloud resources used
+- `npm install` at the repo root installs all workspace packages.
+- `npm run lint:frontend` and `npm run lint:backend` are currently placeholder commands for the baseline.
+- `turbo.json` provides a monorepo pipeline structure for future affected builds.

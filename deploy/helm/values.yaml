@@ -1,0 +1,8 @@
+frontend:
+  image:
+    repository: app-frontend
+    tag: latest
+backend:
+  image:
+    repository: app-backend
+    tag: latest

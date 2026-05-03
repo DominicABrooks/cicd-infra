@@ -6,7 +6,11 @@ infra/.terraform/
 
 # Node.js
 node_modules/
+apps/*/node_modules/
+packages/*/node_modules/
+.dist/
 dist/
+e2e/
 *.log
 playwright-report/
 test-results/

@@ -1,27 +1,24 @@
 {
   "name": "cicd-infra",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "test": "vitest",
-    "test:e2e": "playwright test --config=playwright.config.mjs"
-  },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "dev:frontend": "npm --workspace frontend run dev",
+    "build:frontend": "npm --workspace frontend run build",
+    "test:frontend": "npm --workspace frontend run test",
+    "test:frontend:e2e": "npm --workspace frontend run test:e2e",
+    "lint:frontend": "npm --workspace frontend run lint",
+    "typecheck:frontend": "npm --workspace frontend run typecheck",
+    "build:backend": "npm --workspace backend run build",
+    "test:backend": "npm --workspace backend run test",
+    "lint:backend": "npm --workspace backend run lint",
+    "typecheck:backend": "npm --workspace backend run typecheck",
+    "install": "npm install"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.1",
-    "@testing-library/react": "^14.1.2",
-    "@types/react": "^18.2.43",
-    "@types/react-dom": "^18.2.17",
-    "@vitejs/plugin-react": "^4.2.1",
-    "jsdom": "^23.2.0",
-    "vite": "^5.0.8",
-    "vitest": "^1.2.2"
+    "turbo": "^1.12.0"
   }
 }

@@ -1,0 +1,13 @@
+{
+  "name": "backend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo 'backend build placeholder'",
+    "test": "echo 'backend tests placeholder'",
+    "lint": "echo 'backend lint placeholder'",
+    "typecheck": "echo 'backend typecheck placeholder'"
+  },
+  "dependencies": {}
+}

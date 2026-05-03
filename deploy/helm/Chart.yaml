@@ -1,0 +1,5 @@
+apiVersion: v2
+name: cicd-infra
+description: Helm chart for CICD demo deployment
+version: 0.1.0
+appVersion: "0.1.0"
