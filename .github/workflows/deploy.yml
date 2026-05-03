@@ -14,8 +14,8 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
-      - run: terraform init
-      - run: terraform apply -auto-approve
+      - run: cd infra && terraform init
+      - run: cd infra && terraform apply -auto-approve
 
   deploy:
     runs-on: ubuntu-latest
@@ -34,6 +34,8 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - run: npx playwright install
+      - run: npx playwright test
 
       - name: Deploy to Pages
         uses: peaceiris/actions-gh-pages@v3
