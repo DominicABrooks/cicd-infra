@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "echo 'backend tests placeholder'",
-    "lint": "echo 'backend lint placeholder'",
+    "test": "vitest run",
+    "lint": "eslint . --ext .ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "dependencies": {}
+  "devDependencies": {
+    "@pact-foundation/pact": "^16.3.1",
+    "vitest": "^1.6.1"
+  }
 }

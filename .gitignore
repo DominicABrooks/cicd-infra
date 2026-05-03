@@ -16,6 +16,8 @@ apps/backend/dist/
 *.log
 playwright-report/
 test-results/
+# Pact
+pacts/
 
 # Git
 .DS_Store
