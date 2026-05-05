@@ -1,93 +1,126 @@
-name: Deploy
+name: Deploy Pipeline
 
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-  terraform:
+  # 1. TEST PHASE: Lint, Typecheck, Unit Tests, and Pact Contract Tests
+  test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v5
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
-
-      - run: cd infra/terraform && terraform init
-      - run: cd infra/terraform && terraform apply -auto-approve
-
-  build:
-    runs-on: ubuntu-latest
-    needs: terraform
-
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v5
         with:
-          node-version: '18'
+          node-version: '22'
+          cache: 'npm'
 
       - run: npm ci
 
-      # Static checks
-      - run: npm run lint:frontend
-      - run: npm run typecheck:frontend
-      - run: npm run lint:backend
-      - run: npm run typecheck:backend
+      - name: Static Analysis (Lint & Typecheck)
+        run: |
+          npm run lint:frontend
+          npm run typecheck:frontend
+          npm run lint:backend
+          npm run typecheck:backend
 
-      # Unit tests & Contract tests
-      - name: Run frontend tests (generates Pact consumer contracts)
+      - name: Consumer Contract Tests (Frontend)
         run: npm run test:frontend
-      - name: Run backend tests (verifies Pact provider contracts)
+      
+      - name: Provider Contract Tests (Backend)
         run: npm run test:backend
 
-      # Build artifacts
-      - run: npm run build:frontend
-      - run: npm run build:backend
-
-      # Upload frontend build for next job
-      - uses: actions/upload-artifact@v5
-        with:
-          name: frontend-dist
-          path: apps/frontend/dist
-
-  e2e:
+  # 2. BUILD PHASE: Build and Push Docker Images to GHCR
+  docker-build-push:
+    needs: test
     runs-on: ubuntu-latest
-    needs: build
-
-    container:
-      image: mcr.microsoft.com/playwright:v1.59.1-jammy
-
-    # Fix for Firefox
-    env:
-      HOME: /root
-
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v5
 
-      - name: Setup Node.js
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}-backend:${{ github.sha }}
+            ghcr.io/${{ github.repository }}-backend:latest
+
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/frontend/Dockerfile
+          push: true
+          build-args: |
+            VITE_SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+            VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          tags: |
+            ghcr.io/${{ github.repository }}-frontend:${{ github.sha }}
+            ghcr.io/${{ github.repository }}-frontend:latest
+
+  # 3. VERIFY PHASE: Full-Stack E2E and Security Scans
+  e2e-and-security:
+    needs: docker-build-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Setup Node.js 22
         uses: actions/setup-node@v5
         with:
-          node-version: '18'
-
+          node-version: '22'
+          
       - run: npm ci
 
-      # Download built frontend
-      - uses: actions/download-artifact@v5
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          name: frontend-dist
-          path: apps/frontend/dist
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Serve built app
-      - name: Start frontend server
+      - name: Spin up full stack for testing
+        env:
+          FRONTEND_IMAGE: ghcr.io/${{ github.repository }}-frontend:${{ github.sha }}
+          BACKEND_IMAGE: ghcr.io/${{ github.repository }}-backend:${{ github.sha }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          ALLOW_MOCK_AUTH: "true"
         run: |
-          npx serve apps/frontend/dist -l 5173 &
-          npx wait-on http://localhost:5173
+          docker-compose up -d
+          # Wait for frontend to be reachable
+          npx wait-on http://localhost:5173 --timeout 60000
 
-      # Run Playwright tests (no install needed in this container)
-      - run: npx playwright test --config=apps/frontend/playwright.config.ts
+      - name: Run Playwright E2E Tests
+        env:
+          BASE_URL: http://localhost:5173
+        run: npm --workspace frontend run test:e2e
+
+      - name: OWASP ZAP Security Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:5173'
+          fail_action: false
 
       - uses: actions/upload-artifact@v5
         if: always()
@@ -95,49 +128,24 @@ jobs:
           name: playwright-report
           path: apps/frontend/playwright-report/
 
-  security:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: '18'
-
-      - uses: actions/download-artifact@v5
-        with:
-          name: frontend-dist
-          path: apps/frontend/dist
-
-      - name: Start frontend server
-        run: |
-          npx serve apps/frontend/dist -l 5173 &
-          npx wait-on http://localhost:5173
-
-      - name: OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
-        with:
-          # 172.17.0.1 is the default Docker bridge IP which allows the ZAP container to reach the runner's localhost
-          target: 'http://172.17.0.1:5173'
-
+  # 4. DEPLOY PHASE: Infrastructure and Deployment
   deploy:
+    needs: e2e-and-security
     runs-on: ubuntu-latest
-    needs: [e2e, security]
-    permissions:
-      contents: write
-
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v5
-        with:
-          name: frontend-dist
-          path: apps/frontend/dist
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
 
-      - name: Deploy to Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: apps/frontend/dist
+      - name: Terraform Init & Apply
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+        run: |
+          cd infra/terraform
+          terraform init
+          terraform apply -auto-approve

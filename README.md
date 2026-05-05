@@ -1,108 +1,48 @@
-# Monorepo CI/CD Baseline
+# CICD-Infra Monorepo Architecture
 
-This repository has been converted to a monorepo baseline with:
-- `apps/frontend` — React/Vite frontend
-- `apps/backend` — placeholder backend service
-- `packages/shared` — shared package
-- `infra/terraform` — Terraform infra definitions
-- `deploy/helm` — Helm chart artifacts
-- `.github/workflows` — CI/CD pipeline
+Welcome to the central repository for our full-stack application and its infrastructure. 
 
-## Overview
+To keep this repository clean and easy to navigate, we have organized our detailed technical documentation into the `docs/` directory.
 
-This baseline is built for a monorepo pipeline where:
-- affected detection is possible
-- frontend and backend workloads are separated
-- infrastructure and deployment artifacts live in dedicated folders
-- Docker images are built once and reused across environments
+## Documentation Index
 
-## Architecture
+Whether you are onboarding for the first time or looking for specific architectural decisions, please refer to the documents below:
 
-- **Monorepo**: npm workspaces
-- **Frontend**: React + Vite
-- **Backend**: Node placeholder service
-- **Shared**: package boundary for shared code
-- **Infrastructure**: Terraform in `infra/terraform`
-- **Deployment**: Helm chart in `deploy/helm`
+1. **[Architecture & Mental Model](./docs/architecture.md)**
+   - Understand the "Factory Pipeline" concept.
+   - High-level overview of our AWS Terraform infrastructure.
 
-## Local Development
+2. **[Local Development Guide](./docs/local-development.md)**
+   - Copy-paste ready commands to spin up the application.
+   - Using the `docker-compose` container-first workflow.
+   - Using the fast local development (HMR) workflow.
 
-### Prerequisites
+3. **[Testing Strategy](./docs/testing-strategy.md)**
+   - Why we use Vitest, Pact, Playwright, and OWASP ZAP.
+   - Explanations of contract testing vs E2E testing.
 
-- [Node.js](https://nodejs.org/) (v18+)
-- [Terraform](https://www.terraform.io/downloads) (optional)
-- Git
+4. **[CI/CD Pipeline & Workflow](./docs/ci-cd-pipeline.md)**
+   - A phase-by-phase breakdown of our GitHub Actions pipeline.
+   - How Docker images are built, tested, and pushed.
+   - Our roadmap for transitioning safely to Kubernetes.
 
-### Setup
+5. **[Backend API & Authentication](./docs/backend-api.md)**
+   - Express CRUD API reference with endpoint details.
+   - Supabase Auth integration and JWT verification flow.
+   - PostgreSQL schema and migration instructions.
 
-```bash
-git clone https://github.com/DominicABrooks/cicd-infra.git
-cd cicd-infra
-npm install
-```
+6. **[Tradeoffs & Known Concerns](./docs/tradeoffs-and-concerns.md)**
+   - Honest documentation of known pain points.
+   - Why Docker cache invalidation is slow, and how we mitigate E2E flakiness.
 
-### Frontend
+---
+
+### Quick Start
+
+If you just want to get the application running immediately, ensure Docker is installed and run:
 
 ```bash
-npm run dev:frontend
+docker-compose up -d --build
 ```
 
-### Backend
-
-```bash
-npm run test:backend
-npm run build:backend
-```
-
-### Testing
-
-```bash
-npm run test:frontend
-npm run test:frontend:e2e
-```
-
-### Terraform
-
-```bash
-cd infra/terraform
-terraform init
-terraform apply
-```
-
-## CI/CD Pipeline
-
-The workflow now follows a monorepo-style flow:
-
-1. Checkout
-2. Install dependencies
-3. Frontend and backend lint/typecheck
-4. Frontend and backend unit tests
-5. Frontend and backend build
-6. Playwright e2e tests
-7. Deploy frontend bundle to GitHub Pages
-
-## Project Structure
-
-```
-.
-├── apps/
-│   ├── frontend/          # React/Vite frontend app
-│   └── backend/           # backend service placeholder
-├── packages/
-│   └── shared/            # shared package
-├── infra/
-│   └── terraform/         # Terraform config
-├── deploy/
-│   └── helm/              # Helm chart placeholder
-├── .github/
-│   └── workflows/         # CI/CD config
-├── package.json           # monorepo workspace root
-├── turbo.json             # monorepo pipeline baseline
-└── .gitignore
-```
-
-## Notes
-
-- `npm install` at the repo root installs all workspace packages.
-- `npm run lint:frontend` and `npm run lint:backend` are currently placeholder commands for the baseline.
-- `turbo.json` provides a monorepo pipeline structure for future affected builds.
+Then visit `http://localhost:5173`.

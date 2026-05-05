@@ -19,6 +19,10 @@ test-results/
 # Pact
 pacts/
 
+# Environment
+.env
+.env.local
+
 # Git
 .DS_Store
 Thumbs.db
