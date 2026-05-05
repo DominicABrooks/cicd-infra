@@ -89,7 +89,7 @@ jobs:
     needs: docker-build-push
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.44.0-jammy
+      image: mcr.microsoft.com/playwright:v1.49.1-jammy
       options: --user root -v /var/run/docker.sock:/var/run/docker.sock
     steps:
       - uses: actions/checkout@v5
