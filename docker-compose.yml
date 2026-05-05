@@ -12,6 +12,11 @@ services:
       POSTGRES_DB: cicd_infra
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cicd_infra"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   backend:
     image: ${BACKEND_IMAGE:-backend-local}
@@ -28,7 +33,13 @@ services:
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   frontend:
     image: ${FRONTEND_IMAGE:-frontend-local}
@@ -41,7 +52,13 @@ services:
     ports:
       - "5173:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   playwright:
     image: mcr.microsoft.com/playwright:v1.59.1-jammy
@@ -54,8 +71,10 @@ services:
     command: >
       sh -c "npm ci && npx playwright test --config=apps/frontend/playwright.config.ts"
     depends_on:
-      - frontend
-      - backend
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
 
 volumes:
   pgdata:

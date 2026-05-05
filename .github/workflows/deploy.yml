@@ -104,10 +104,8 @@ jobs:
           ALLOW_MOCK_AUTH: "true"
         run: |
           docker compose up -d db backend frontend
-          # Wait for services to be ready
-          npx wait-on http://localhost:5173 --timeout 60000
           
-          # Run the Playwright service
+          # Run the Playwright service (it will wait for healthchecks internally)
           docker compose run playwright
 
       - name: OWASP ZAP Security Scan
