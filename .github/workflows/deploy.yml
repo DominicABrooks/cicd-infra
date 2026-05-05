@@ -97,6 +97,8 @@ jobs:
       - name: Prepare Repository Name
         run: echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
+      - run: npm ci
+
       - name: Spin up full stack for testing
         env:
           FRONTEND_IMAGE: ghcr.io/${{ env.REPO_LOWER }}-frontend:${{ github.sha }}
