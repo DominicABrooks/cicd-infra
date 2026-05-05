@@ -43,5 +43,19 @@ services:
     depends_on:
       - backend
 
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.49.1-jammy
+    working_dir: /work
+    volumes:
+      - .:/work
+    environment:
+      - BASE_URL=http://frontend:80
+    # Command to run tests. Note: we run 'npm ci' to ensure dependencies are present in the volume
+    command: >
+      sh -c "npm ci && npx playwright test --config=apps/frontend/playwright.config.ts"
+    depends_on:
+      - frontend
+      - backend
+
 volumes:
   pgdata:
