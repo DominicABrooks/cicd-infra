@@ -51,6 +51,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Prepare Repository Name
+        run: echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -61,8 +64,10 @@ jobs:
           file: apps/backend/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}-backend:${{ github.sha }}
-            ghcr.io/${{ github.repository }}-backend:latest
+            ghcr.io/${{ env.REPO_LOWER }}-backend:${{ github.sha }}
+            ghcr.io/${{ env.REPO_LOWER }}-backend:latest
+          cache-from: type=registry,ref=ghcr.io/${{ env.REPO_LOWER }}-backend:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ env.REPO_LOWER }}-backend:buildcache,mode=max
 
       - name: Build and push Frontend
         uses: docker/build-push-action@v5
@@ -74,8 +79,10 @@ jobs:
             VITE_SUPABASE_URL=${{ secrets.SUPABASE_URL }}
             VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
           tags: |
-            ghcr.io/${{ github.repository }}-frontend:${{ github.sha }}
-            ghcr.io/${{ github.repository }}-frontend:latest
+            ghcr.io/${{ env.REPO_LOWER }}-frontend:${{ github.sha }}
+            ghcr.io/${{ env.REPO_LOWER }}-frontend:latest
+          cache-from: type=registry,ref=ghcr.io/${{ env.REPO_LOWER }}-frontend:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ env.REPO_LOWER }}-frontend:buildcache,mode=max
 
   # 3. VERIFY PHASE: Full-Stack E2E and Security Scans
   e2e-and-security:
@@ -98,10 +105,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Prepare Repository Name
+        run: echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
       - name: Spin up full stack for testing
         env:
-          FRONTEND_IMAGE: ghcr.io/${{ github.repository }}-frontend:${{ github.sha }}
-          BACKEND_IMAGE: ghcr.io/${{ github.repository }}-backend:${{ github.sha }}
+          FRONTEND_IMAGE: ghcr.io/${{ env.REPO_LOWER }}-frontend:${{ github.sha }}
+          BACKEND_IMAGE: ghcr.io/${{ env.REPO_LOWER }}-backend:${{ github.sha }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
