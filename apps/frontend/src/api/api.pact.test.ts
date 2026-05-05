@@ -39,12 +39,12 @@ describe('API Pact test', () => {
 
     await provider.executeTest(async (mockServer) => {
       const originalFetch = global.fetch;
-      global.fetch = (input: any, init?: any) => {
+      global.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
         if (typeof input === 'string' && input === '/api/hello') {
           return originalFetch(`${mockServer.url}/api/hello`, init);
         }
         return originalFetch(input, init);
-      };
+      }) as typeof global.fetch;
 
       try {
         const response = await fetchHello();
@@ -80,12 +80,12 @@ describe('API Pact test', () => {
 
     await provider.executeTest(async (mockServer) => {
       const originalFetch = global.fetch;
-      global.fetch = (input: any, init?: any) => {
+      global.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
         if (typeof input === 'string' && input === '/api/items') {
           return originalFetch(`${mockServer.url}/api/items`, init);
         }
         return originalFetch(input, init);
-      };
+      }) as typeof global.fetch;
 
       try {
         const response = await fetchItems();

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
+import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 import { Auth } from '../Auth';
 import { ItemsList } from '../ItemsList';
 import { LogOut, Layout, User } from 'lucide-react';
 
 function App() {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
