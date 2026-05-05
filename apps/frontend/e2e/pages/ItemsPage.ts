@@ -24,6 +24,7 @@ export class ItemsPage {
   }
 
   async createItem(name: string, description: string) {
+    await expect(this.addItemButton).toBeVisible();
     await this.addItemButton.click();
     await this.nameInput.fill(name);
     await this.descriptionInput.fill(description);

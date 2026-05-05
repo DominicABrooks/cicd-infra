@@ -14,14 +14,17 @@ export interface CreateItemInput {
   description?: string;
 }
 
-async function getAuthHeaders() {
+async function getAuthHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return {};
-  
-  return {
-    'Authorization': `Bearer ${session.access_token}`,
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
+
+  if (session) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
+  
+  return headers;
 }
 
 export async function fetchHello(): Promise<{ message: string }> {

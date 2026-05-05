@@ -47,7 +47,7 @@ function App() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{ 
               background: 'var(--accent-gradient)', 
-              p: '0.5rem', 
+              padding: '0.5rem', 
               borderRadius: '0.5rem', 
               display: 'flex', 
               alignItems: 'center', 
