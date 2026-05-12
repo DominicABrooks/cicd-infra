@@ -3,16 +3,14 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copy package.json files for strict dependency installation
-COPY out/json/ ./
-COPY out/package-lock.json ./
+COPY json/ ./
+COPY package-lock.json ./
 
 # Install dependencies (heavily cached)
 RUN npm ci
 
 # Copy full pruned source code
-COPY out/full/ ./
-COPY turbo.json ./
-COPY tsconfig.json ./
+COPY full/ ./
 
 RUN npm run build:backend
 
