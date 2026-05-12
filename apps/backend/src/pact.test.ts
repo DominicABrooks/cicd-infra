@@ -1,4 +1,4 @@
-import { Verifier } from '@pact-foundation/pact';
+import { Verifier, VerifierOptions } from '@pact-foundation/pact';
 import path from 'path';
 import { describe, it, beforeAll, afterAll, vi } from 'vitest';
 import http from 'http';
@@ -65,13 +65,24 @@ describe('Pact Verification', () => {
   });
 
   it('validates the expectations of FrontendApp', async () => {
-    const opts = {
+    const brokerUrl = process.env.PACT_BROKER_URL;
+    const opts: VerifierOptions = {
       provider: 'BackendAPI',
       providerBaseUrl: `http://localhost:${port}`,
-      pactUrls: [
-        path.resolve(process.cwd(), '../frontend/pacts/FrontendApp-BackendAPI.json'),
-      ],
     };
+
+    if (brokerUrl) {
+      console.log('Fetching contracts from Pact Broker...');
+      opts.pactBrokerUrl = brokerUrl;
+      opts.pactBrokerToken = process.env.PACT_BROKER_TOKEN;
+      opts.publishVerificationResult = true;
+      opts.providerVersion = process.env.GIT_COMMIT || 'local';
+    } else {
+      console.warn('WARNING: No PACT_BROKER_URL provided. Falling back to local integration file check. This violates independent deployability!');
+      opts.pactUrls = [
+        path.resolve(process.cwd(), '../frontend/pacts/FrontendApp-BackendAPI.json'),
+      ];
+    }
 
     const verifier = new Verifier(opts);
     await verifier.verifyProvider();

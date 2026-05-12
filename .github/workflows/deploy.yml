@@ -47,24 +47,29 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Prune Backend Workspace
+        run: npx turbo prune backend --docker
+
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: apps/backend/Dockerfile
+          context: ./out
+          file: ./out/apps/backend/Dockerfile
           push: ${{ !env.ACT }}
           load: ${{ !!env.ACT }}
           tags: |
             ghcr.io/${{ env.REPO_LOWER }}-backend:${{ github.sha }}
-            ghcr.io/${{ env.REPO_LOWER }}-backend:latest
           cache-from: type=registry,ref=ghcr.io/${{ env.REPO_LOWER }}-backend:buildcache
           cache-to: type=registry,ref=ghcr.io/${{ env.REPO_LOWER }}-backend:buildcache,mode=max
+
+      - name: Prune Frontend Workspace
+        run: npx turbo prune frontend --docker
 
       - name: Build and push Frontend
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: apps/frontend/Dockerfile
+          context: ./out
+          file: ./out/apps/frontend/Dockerfile
           push: ${{ !env.ACT }}
           load: ${{ !!env.ACT }}
           build-args: |
@@ -72,14 +77,18 @@ jobs:
             VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
           tags: |
             ghcr.io/${{ env.REPO_LOWER }}-frontend:${{ github.sha }}
-            ghcr.io/${{ env.REPO_LOWER }}-frontend:latest
           cache-from: type=registry,ref=ghcr.io/${{ env.REPO_LOWER }}-frontend:buildcache
           cache-to: type=registry,ref=ghcr.io/${{ env.REPO_LOWER }}-frontend:buildcache,mode=max
 
   # 3. VERIFY PHASE: Full-Stack E2E and Security Scans
   e2e-and-security:
-    needs: docker-build-push
+    needs: [test, docker-build-push]
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shardIndex: [1, 2, 3]
+        shardTotal: [3]
     permissions:
       contents: read
       issues: write
@@ -98,6 +107,7 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ALLOW_MOCK_AUTH: "true"
+          SHARD_ARG: "--shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}"
         run: |
           docker compose up -d db backend frontend
           
@@ -105,6 +115,7 @@ jobs:
           docker compose up -d playwright
 
       - name: OWASP ZAP Security Scan
+        if: matrix.shardIndex == 1
         uses: zaproxy/action-baseline@v0.15.0
         with:
           target: 'http://localhost:5173'
@@ -139,12 +150,42 @@ jobs:
       - uses: actions/upload-artifact@v5
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-shard-${{ matrix.shardIndex }}
           path: playwright-report/
 
-  # 4. DEPLOY PHASE: Infrastructure and Deployment
-  deploy:
+  # 4. PROMOTE PHASE: Tag successful images as latest
+  promote-images:
     needs: e2e-and-security
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      packages: write
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Prepare Repository Name
+        run: echo "REPO_LOWER=$(echo ${GITHUB_REPOSITORY} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Promote Backend to latest
+        run: |
+          docker buildx imagetools create \
+            ghcr.io/${{ env.REPO_LOWER }}-backend:${{ github.sha }} \
+            --tag ghcr.io/${{ env.REPO_LOWER }}-backend:latest
+
+      - name: Promote Frontend to latest
+        run: |
+          docker buildx imagetools create \
+            ghcr.io/${{ env.REPO_LOWER }}-frontend:${{ github.sha }} \
+            --tag ghcr.io/${{ env.REPO_LOWER }}-frontend:latest
+
+  # 5. DEPLOY PHASE: Infrastructure and Deployment
+  deploy:
+    needs: promote-images
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:

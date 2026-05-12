@@ -2,17 +2,18 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Copy root configurations
-COPY package*.json ./
+# Copy package.json files for strict dependency installation
+COPY out/json/ ./
+COPY out/package-lock.json ./
+
+# Install dependencies (heavily cached)
+RUN npm ci
+
+# Copy full pruned source code
+COPY out/full/ ./
 COPY turbo.json ./
 COPY tsconfig.json ./
 
-# Copy source code
-COPY apps/backend/ apps/backend/
-COPY packages/ packages/
-
-# Install dependencies and build
-RUN npm ci
 RUN npm run build:backend
 
 # Prune dev dependencies for a smaller runtime footprint

@@ -1,0 +1,16 @@
+FROM mcr.microsoft.com/playwright:v1.59.1-jammy
+
+WORKDIR /work
+
+COPY package*.json ./
+COPY turbo.json ./
+COPY tsconfig.json ./
+
+# Only copy what's strictly necessary to install root dependencies and frontend dependencies
+COPY apps/frontend/package*.json ./apps/frontend/
+COPY packages/ ./packages/
+
+RUN npm ci
+
+# Copy the rest of the workspace (or just mount it via docker-compose)
+COPY . .

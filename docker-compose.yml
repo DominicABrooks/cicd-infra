@@ -61,15 +61,16 @@ services:
       retries: 5
 
   playwright:
-    image: mcr.microsoft.com/playwright:v1.59.1-jammy
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile.playwright
     working_dir: /work
-    volumes:
-      - .:/work
     environment:
       - BASE_URL=http://frontend:80
-    # Command to run tests. Note: we run 'npm ci' to ensure dependencies are present in the volume
+      - SHARD_ARG=${SHARD_ARG:-}
+    # Command to run tests directly, skipping npm ci
     command: >
-      sh -c "npm ci && npx playwright test --config=apps/frontend/playwright.config.ts"
+      sh -c "npx playwright test --config=apps/frontend/playwright.config.ts $$SHARD_ARG"
     depends_on:
       frontend:
         condition: service_healthy

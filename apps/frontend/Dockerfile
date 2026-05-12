@@ -2,17 +2,17 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Copy root configurations and workspaces
-COPY package*.json ./
-COPY turbo.json ./
-COPY tsconfig.json ./
-
-# Copy source code
-COPY apps/frontend/ apps/frontend/
-COPY packages/ packages/
+# Copy package.json files for strict dependency installation
+COPY out/json/ ./
+COPY out/package-lock.json ./
 
 # Install dependencies
 RUN npm ci
+
+# Copy full pruned source code
+COPY out/full/ ./
+COPY turbo.json ./
+COPY tsconfig.json ./
 
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
@@ -29,7 +29,7 @@ FROM nginx:alpine AS runner
 COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
 
 # Copy custom nginx.conf for SPA routing and API proxying
-COPY apps/frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY out/full/apps/frontend/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
