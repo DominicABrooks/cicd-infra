@@ -21,18 +21,8 @@ jobs:
 
       - run: npm ci
 
-      - name: Static Analysis (Lint & Typecheck)
-        run: |
-          npm run lint:frontend
-          npm run typecheck:frontend
-          npm run lint:backend
-          npm run typecheck:backend
-
-      - name: Consumer Contract Tests (Frontend)
-        run: npm run test:frontend
-      
-      - name: Provider Contract Tests (Backend)
-        run: npm run test:backend
+      - name: Run Tests & Static Analysis
+        run: npx turbo run lint typecheck test
 
   # 2. BUILD PHASE: Build and Push Docker Images to GHCR
   docker-build-push:
@@ -123,9 +113,17 @@ jobs:
           allow_issue_writing: ${{ !env.ACT }}
 
       - name: Wait for E2E tests to complete
+        env:
+          FRONTEND_IMAGE: ghcr.io/${{ env.REPO_LOWER }}-frontend:${{ github.sha }}
+          BACKEND_IMAGE: ghcr.io/${{ env.REPO_LOWER }}-backend:${{ github.sha }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ALLOW_MOCK_AUTH: "true"
         run: |
           # Retrieve the playwright container ID
-          PLAYWRIGHT_CONTAINER=$(docker compose ps -q playwright)
+          PLAYWRIGHT_CONTAINER=$(docker compose ps -q -a playwright)
           
           # Block until it finishes and get the exit code
           EXIT_CODE=$(docker wait $PLAYWRIGHT_CONTAINER)
