@@ -62,7 +62,8 @@ jobs:
         with:
           context: .
           file: apps/backend/Dockerfile
-          push: true
+          push: ${{ !env.ACT }}
+          load: ${{ !!env.ACT }}
           tags: |
             ghcr.io/${{ env.REPO_LOWER }}-backend:${{ github.sha }}
             ghcr.io/${{ env.REPO_LOWER }}-backend:latest
@@ -74,7 +75,8 @@ jobs:
         with:
           context: .
           file: apps/frontend/Dockerfile
-          push: true
+          push: ${{ !env.ACT }}
+          load: ${{ !!env.ACT }}
           build-args: |
             VITE_SUPABASE_URL=${{ secrets.SUPABASE_URL }}
             VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
@@ -117,6 +119,8 @@ jobs:
         with:
           target: 'http://localhost:5173'
           fail_action: false
+          artifact_name: 'zap-scan-report'
+          allow_issue_writing: ${{ !env.ACT }}
 
       - name: Wait for E2E tests to complete
         run: |
