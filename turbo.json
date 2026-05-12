@@ -11,6 +11,12 @@
       "dependsOn": ["^typecheck"],
       "outputs": []
     },
+    "frontend#test": {
+      "outputs": ["pacts/**"]
+    },
+    "backend#test": {
+      "dependsOn": ["frontend#test"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
