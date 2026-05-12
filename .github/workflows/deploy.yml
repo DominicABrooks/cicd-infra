@@ -54,7 +54,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./out
-          file: ./out/apps/backend/Dockerfile
+          file: ./out/full/apps/backend/Dockerfile
           push: ${{ !env.ACT }}
           load: ${{ !!env.ACT }}
           tags: |
@@ -69,7 +69,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./out
-          file: ./out/apps/frontend/Dockerfile
+          file: ./out/full/apps/frontend/Dockerfile
           push: ${{ !env.ACT }}
           load: ${{ !!env.ACT }}
           build-args: |
