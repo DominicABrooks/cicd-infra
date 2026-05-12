@@ -88,13 +88,16 @@ jobs:
   e2e-and-security:
     needs: docker-build-push
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@v5
 
       - name: Prepare Repository Name
         run: echo "REPO_LOWER=$(echo ${GITHUB_REPOSITORY} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-      - name: Spin up full stack and run E2E
+      - name: Spin up full stack and start E2E
         env:
           FRONTEND_IMAGE: ghcr.io/${{ env.REPO_LOWER }}-frontend:${{ github.sha }}
           BACKEND_IMAGE: ghcr.io/${{ env.REPO_LOWER }}-backend:${{ github.sha }}
@@ -106,14 +109,30 @@ jobs:
         run: |
           docker compose up -d db backend frontend
           
-          # Run the Playwright service (it will wait for healthchecks internally)
-          docker compose run playwright
+          # Start the Playwright service in detached mode to run concurrently with ZAP
+          docker compose up -d playwright
 
       - name: OWASP ZAP Security Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
           target: 'http://localhost:5173'
           fail_action: false
+
+      - name: Wait for E2E tests to complete
+        run: |
+          # Retrieve the playwright container ID
+          PLAYWRIGHT_CONTAINER=$(docker compose ps -q playwright)
+          
+          # Block until it finishes and get the exit code
+          EXIT_CODE=$(docker wait $PLAYWRIGHT_CONTAINER)
+          echo "Playwright exited with code: $EXIT_CODE"
+          
+          # Print the Playwright logs for the GitHub Actions console
+          docker compose logs playwright
+          
+          if [ "$EXIT_CODE" != "0" ]; then
+            exit $EXIT_CODE
+          fi
 
       - uses: actions/upload-artifact@v5
         if: always()
