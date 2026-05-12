@@ -48,28 +48,32 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Prune Backend Workspace
-        run: npx turbo prune backend --docker
+        run: |
+          npx turbo prune backend --docker --out-dir out-backend
+          cp tsconfig.json out-backend/
 
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
-          context: ./out
-          file: ./out/full/apps/backend/Dockerfile
+          context: ./out-backend
+          file: ./out-backend/full/apps/backend/Dockerfile
           push: ${{ !env.ACT }}
           load: ${{ !!env.ACT }}
           tags: |
             ghcr.io/${{ env.REPO_LOWER }}-backend:${{ github.sha }}
-          cache-from: type=registry,ref=ghcr.io/${{ env.REPO_LOWER }}-backend:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ env.REPO_LOWER }}-backend:buildcache,mode=max
+          cache-from: ${{ !env.ACT && format('type=registry,ref=ghcr.io/{0}-backend:buildcache', env.REPO_LOWER) || '' }}
+          cache-to: ${{ !env.ACT && format('type=registry,ref=ghcr.io/{0}-backend:buildcache,mode=max', env.REPO_LOWER) || '' }}
 
       - name: Prune Frontend Workspace
-        run: npx turbo prune frontend --docker
+        run: |
+          npx turbo prune frontend --docker --out-dir out-frontend
+          cp tsconfig.json out-frontend/
 
       - name: Build and push Frontend
         uses: docker/build-push-action@v5
         with:
-          context: ./out
-          file: ./out/full/apps/frontend/Dockerfile
+          context: ./out-frontend
+          file: ./out-frontend/full/apps/frontend/Dockerfile
           push: ${{ !env.ACT }}
           load: ${{ !!env.ACT }}
           build-args: |
@@ -77,8 +81,8 @@ jobs:
             VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
           tags: |
             ghcr.io/${{ env.REPO_LOWER }}-frontend:${{ github.sha }}
-          cache-from: type=registry,ref=ghcr.io/${{ env.REPO_LOWER }}-frontend:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ env.REPO_LOWER }}-frontend:buildcache,mode=max
+          cache-from: ${{ !env.ACT && format('type=registry,ref=ghcr.io/{0}-frontend:buildcache', env.REPO_LOWER) || '' }}
+          cache-to: ${{ !env.ACT && format('type=registry,ref=ghcr.io/{0}-frontend:buildcache,mode=max', env.REPO_LOWER) || '' }}
 
   # 3. VERIFY PHASE: Full-Stack E2E and Security Scans
   e2e-and-security:

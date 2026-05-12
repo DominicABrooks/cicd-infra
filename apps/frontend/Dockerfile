@@ -9,6 +9,9 @@ COPY package-lock.json ./
 # Install dependencies
 RUN npm ci
 
+# Copy root tsconfig explicitly for extends resolution
+COPY tsconfig.json ./
+
 # Copy full pruned source code
 COPY full/ ./
 

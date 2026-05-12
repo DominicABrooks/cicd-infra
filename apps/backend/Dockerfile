@@ -9,6 +9,9 @@ COPY package-lock.json ./
 # Install dependencies (heavily cached)
 RUN npm ci
 
+# Copy root tsconfig explicitly for extends resolution
+COPY tsconfig.json ./
+
 # Copy full pruned source code
 COPY full/ ./
 
@@ -26,7 +29,6 @@ ENV NODE_ENV=production
 # Copy strictly what's needed to run
 COPY package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/apps/backend/package.json ./apps/backend/package.json
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 
